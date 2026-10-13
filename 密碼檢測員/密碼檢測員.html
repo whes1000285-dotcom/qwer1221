@@ -461,5 +461,152 @@ function faceLogin(d){
   else toast('人臉辨識失敗（距離 '+bd.toFixed(2)+'，需小於 '+FACE_TH+'），請再試一次或改用密碼登入','err');
 }
 </script>
+  <!-- 密碼提示功能：貼在 </body> 前面 -->
+<style>
+.hint-addon-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px
+}
+.hint-addon-box{
+  margin-top:12px;
+  padding:13px 15px;
+  border-radius:13px;
+  background:rgba(59,130,246,.1);
+  border:1px solid rgba(96,165,250,.2);
+  color:#bfdbfe;
+  font-size:13px;
+  line-height:1.6
+}
+.hint-addon-box[hidden]{display:none}
+.hint-addon-note{
+  margin-top:7px;
+  color:#64748b;
+  font-size:12px;
+  line-height:1.5
+}
+</style>
+
+<script>
+(() => {
+  const emailField = document.getElementById('re').closest('.f');
+
+  emailField.insertAdjacentHTML('afterend', `
+    <div class="f">
+      <label>密碼提示</label>
+      <div class="iw">
+        <i class="ti ti-bulb ic"></i>
+        <input
+          id="rh"
+          type="text"
+          maxlength="120"
+          placeholder="例如：第一次旅行的城市（不要填答案）"
+          oninput="chk()"
+        >
+      </div>
+      <div class="hint-addon-note">
+        請寫只有你看得懂的線索，不要輸入密碼或答案本身。
+      </div>
+    </div>
+  `);
+
+  const forgotButton = document.querySelector('#li .fpl');
+  const helpRow = document.createElement('div');
+  helpRow.className = 'hint-addon-row';
+
+  forgotButton.parentNode.insertBefore(helpRow, forgotButton);
+  helpRow.appendChild(forgotButton);
+
+  const hintButton = document.createElement('button');
+  hintButton.type = 'button';
+  hintButton.className = 'fpl';
+  hintButton.textContent = '查看密碼提示';
+  hintButton.onclick = showPasswordHint;
+  helpRow.appendChild(hintButton);
+
+  const hintBox = document.createElement('div');
+  hintBox.id = 'passwordHintBox';
+  hintBox.className = 'hint-addon-box';
+  hintBox.hidden = true;
+  helpRow.insertAdjacentElement('afterend', hintBox);
+
+  document.getElementById('lu').addEventListener('input', () => {
+    hintBox.hidden = true;
+  });
+
+  const originalChk = window.chk;
+
+  window.chk = function () {
+    originalChk();
+
+    const hint = document.getElementById('rh').value.trim();
+
+    if (hint.length < 2) {
+      document.getElementById('rb').disabled = true;
+    }
+  };
+
+  const originalReg = window.reg;
+
+  window.reg = function () {
+    const username = document.getElementById('ru').value.trim();
+    const hint = document.getElementById('rh').value.trim();
+    const password = document.getElementById('rp').value;
+
+    if (hint.length < 2) {
+      toast('請輸入至少 2 個字元的密碼提示', 'err');
+      return;
+    }
+
+    if (
+      hint.toLowerCase() === password.toLowerCase() ||
+      hint.toLowerCase().includes(password.toLowerCase())
+    ) {
+      toast('密碼提示不可包含完整密碼', 'err');
+      return;
+    }
+
+    const accountAlreadyExists = Boolean(db[username]);
+
+    originalReg();
+
+    if (!accountAlreadyExists && db[username]) {
+      db[username].hint = hint;
+
+      setTimeout(() => {
+        document.getElementById('rh').value = '';
+      }, 1200);
+    }
+  };
+
+  function showPasswordHint() {
+    const query = document
+      .getElementById('lu')
+      .value
+      .trim()
+      .toLowerCase();
+
+    if (!query) {
+      toast('請先輸入帳號或 Email', 'info');
+      return;
+    }
+
+    const username = Object.keys(db).find(key =>
+      key.toLowerCase() === query ||
+      String(db[key].e).toLowerCase() === query
+    );
+
+    if (!username || !db[username].hint) {
+      hintBox.hidden = true;
+      toast('找不到可顯示的密碼提示', 'info');
+      return;
+    }
+
+    hintBox.textContent = '提示：' + db[username].hint;
+    hintBox.hidden = false;
+  }
+})();
+</script>
 </body>
 </html>

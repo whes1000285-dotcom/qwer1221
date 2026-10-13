@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>密碼檢測員</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500&family=DM+Sans:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0f172a;--line:#334155;--text:#f8fafc;--sub:#94a3b8;--primary:#3b82f6;--primary2:#2563eb;--shadow:0 20px 50px rgba(0,0,0,.45)}
+body{min-height:100vh;background:radial-gradient(circle at top left,#1e3a8a 0%,transparent 30%),radial-gradient(circle at bottom right,#0f766e 0%,transparent 30%),var(--bg);display:flex;justify-content:center;align-items:center;padding:40px 20px;font-family:'Noto Sans TC',sans-serif;color:var(--text)}
+.card{width:100%;max-width:520px;background:rgba(17,24,39,.92);border:1px solid rgba(255,255,255,.08);border-radius:28px;padding:32px;backdrop-filter:blur(14px);box-shadow:var(--shadow);position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(59,130,246,.08),transparent,rgba(34,197,94,.08));pointer-events:none}
+.logo{text-align:center;margin-bottom:28px}
+.logo-icon{width:72px;height:72px;margin:0 auto 14px;border-radius:22px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--primary),#06b6d4);font-size:34px;color:white;box-shadow:0 10px 30px rgba(59,130,246,.45)}
+.logo h1{font-size:32px;font-family:'DM Sans',sans-serif;font-weight:600;letter-spacing:.5px}
+.tabs{display:flex;gap:10px;margin-bottom:24px}
+.tab{flex:1;background:#0f172a;color:var(--sub);padding:12px;border-radius:14px;font-size:14px;cursor:pointer;transition:.25s;border:1px solid transparent;font-family:inherit}
+.tab:hover{color:white;border-color:rgba(255,255,255,.1)}
+.tab.on{background:linear-gradient(135deg,var(--primary),var(--primary2));color:white;font-weight:600;box-shadow:0 8px 20px rgba(59,130,246,.35)}
+.sec{display:none;animation:fade .35s ease}.sec.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.f{margin-bottom:18px}
+.f label{display:block;margin-bottom:8px;font-size:14px;color:#e2e8f0;font-weight:500}
+.iw{position:relative}
+.ic{position:absolute;top:50%;left:14px;transform:translateY(-50%);color:#64748b;font-size:18px}
+input{width:100%;height:52px;border-radius:16px;border:1px solid var(--line);background:#0f172a;color:white;padding:0 48px 0 46px;font-size:15px;transition:.25s;font-family:inherit}
+input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 4px rgba(59,130,246,.15)}
+input::placeholder{color:#64748b}
+.eye{position:absolute;right:10px;top:50%;transform:translateY(-50%);border:none;background:transparent;color:#94a3b8;cursor:pointer;width:32px;height:32px;border-radius:10px;transition:.2s}
+.eye:hover{background:rgba(255,255,255,.06);color:white}
+.btn{width:100%;border:none;border-radius:16px;height:52px;font-size:15px;font-weight:600;cursor:pointer;transition:.25s;font-family:inherit}
+.bp{background:linear-gradient(135deg,var(--primary),var(--primary2));color:white;box-shadow:0 10px 24px rgba(37,99,235,.35)}
+.bp:hover{transform:translateY(-2px);filter:brightness(1.05)}
+.bp:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.bg{background:#1e293b;color:#cbd5e1;border:1px solid rgba(255,255,255,.08)}
+.bg:hover{background:#334155}
+.dv{text-align:center;color:#64748b;margin:18px 0;font-size:13px;position:relative}
+.dv::before,.dv::after{content:'';position:absolute;top:50%;width:40%;height:1px;background:#334155}
+.dv::before{left:0}.dv::after{right:0}
+.fpl{margin-top:10px;background:none;border:none;color:#60a5fa;cursor:pointer;font-size:13px}
+.fpl:hover{text-decoration:underline}
+#tk{display:none;margin-bottom:18px;padding:14px 16px;border-radius:14px;font-size:14px;font-weight:500}
+#tk.ok{background:rgba(34,197,94,.15);color:#4ade80;border:1px solid rgba(74,222,128,.2)}
+#tk.err{background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(248,113,113,.2)}
+#tk.info{background:rgba(59,130,246,.15);color:#60a5fa;border:1px solid rgba(96,165,250,.2)}
+.sw{margin-top:12px;background:#0f172a;border:1px solid #1e293b;border-radius:18px;padding:14px;display:none}
+.sr{display:flex;justify-content:space-between;margin-bottom:10px;font-size:13px}
+.slb.l1{color:#f87171}.slb.l2{color:#facc15}.slb.l3{color:#4ade80}
+.snum{color:#cbd5e1}
+.pt{width:100%;height:10px;border-radius:999px;background:#1e293b;overflow:hidden;margin-bottom:14px}
+.pf{height:100%;width:0;border-radius:999px;transition:.3s}
+.pf.l1{background:#ef4444}.pf.l2{background:#facc15}.pf.l3{background:#22c55e}
+.cks{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.ck{font-size:12px;padding:8px 10px;border-radius:12px;display:flex;align-items:center;gap:6px;background:#111827;border:1px solid #1e293b;color:#94a3b8}
+.ck.ok{color:#4ade80;border-color:rgba(74,222,128,.25);background:rgba(34,197,94,.08)}
+.ck.bad{color:#f87171}
+.sgw{margin-top:14px;display:none}
+.st{margin-bottom:10px;font-size:13px;color:#facc15;font-weight:600}
+.si{font-size:12px;color:#cbd5e1;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.mh{margin-top:10px;font-size:13px;display:none}
+.mh.ok{color:#4ade80}.mh.no{color:#f87171}
+.warn{display:flex;gap:12px;align-items:flex-start;padding:16px;border-radius:18px;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.2);color:#fde68a;margin-bottom:20px}
+.warn i{font-size:22px}
+.fbox{position:relative;border-radius:20px;overflow:hidden;background:#020617;border:1px solid var(--line);margin-bottom:14px}
+.fbox video{width:100%;display:block;transform:scaleX(-1)}
+.fbox::after{content:'';position:absolute;inset:12% 22%;border:2px dashed rgba(96,165,250,.7);border-radius:50%;pointer-events:none}
+#fmsg{text-align:center;color:var(--sub);font-size:14px;margin-bottom:14px}
+@media(max-width:640px){
+  body{padding:20px 14px}
+  .card{padding:24px 18px;border-radius:22px}
+  .tabs{flex-direction:column}
+  .cks{grid-template-columns:1fr}
+  .logo h1{font-size:28px}
+}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon"><i class="ti ti-shield-lock"></i></div>
+    <h1>密碼檢測員</h1>
+  </div>
+  <div class="tabs">
+    <button class="tab on" onclick="go('li')">登入</button>
+    <button class="tab" onclick="go('rg')">建立帳號</button>
+  </div>
+  <div id="tk"></div>
+
+  <!-- ===== 登入頁 ===== -->
+  <div id="li" class="sec on">
+    <div class="f"><label>帳號</label><div class="iw"><i class="ti ti-user ic"></i><input id="lu" type="text" placeholder="帳號或 Email"></div></div>
+    <div class="f">
+      <label>密碼</label>
+      <div class="iw"><i class="ti ti-lock ic"></i><input id="lp" type="password" placeholder="輸入密碼"><button class="eye" onclick="ep('lp',this)"><i class="ti ti-eye"></i></button></div>
+      <button class="fpl" onclick="go('fp')">忘記密碼？</button>
+    </div>
+    <button class="btn bp" onclick="login()">登入</button>
+    <div class="dv">或</div>
+    <button class="btn bg" onclick="go('rg')">還沒有帳號？立即建立 →</button>
+    <button class="btn bg" style="margin-top:10px" onclick="faceStart('login')"><i class="ti ti-face-id"></i> 人臉登入</button>
+  </div>
+
+  <!-- ===== 建立帳號頁（含人臉綁定、生成密碼） ===== -->
+  <div id="rg" class="sec">
+    <div class="f"><label>帳號</label><div class="iw"><i class="ti ti-user ic"></i><input id="ru" type="text" placeholder="設定帳號" oninput="chk()"></div></div>
+    <div class="f"><label>Email</label><div class="iw"><i class="ti ti-mail ic"></i><input id="re" type="email" placeholder="your@email.com" oninput="chk()"></div></div>
+    <div class="f">
+      <label>密碼</label>
+      <div class="iw"><i class="ti ti-lock ic"></i><input id="rp" type="password" placeholder="設定密碼" oninput="rs(this,'A')"><button class="eye" onclick="ep('rp',this)"><i class="ti ti-eye"></i></button></div>
+      <button class="fpl" type="button" onclick="fillGen('rp','rp2','A')">生成密碼</button>
+      <div id="swA" class="sw"></div>
+    </div>
+    <div class="f">
+      <label>確認密碼</label>
+      <div class="iw"><i class="ti ti-lock-check ic"></i><input id="rp2" type="password" placeholder="再次輸入" oninput="mp('rp','rp2','mhA');chk()"><button class="eye" onclick="ep('rp2',this)"><i class="ti ti-eye"></i></button></div>
+      <div id="mhA" class="mh"></div>
+    </div>
+    <button class="btn bg" id="fbtn" style="margin-bottom:12px" onclick="faceStart('reg')"><i class="ti ti-face-id"></i> 綁定人臉（選填）</button>
+    <button class="btn bp" id="rb" onclick="reg()" disabled>建立帳號</button>
+    <div class="dv">或</div>
+    <button class="btn bg" onclick="go('li')">← 返回登入</button>
+  </div>
+
+  <!-- ===== 忘記密碼頁 ===== -->
+  <div id="fp" class="sec">
+    <div style="text-align:center;margin-bottom:1.5rem">
+      <div style="width:48px;height:48px;background:rgba(251,191,36,.15);border-radius:14px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:.75rem"><i class="ti ti-mail-forward" style="font-size:24px;color:#fbbf24"></i></div>
+      <div style="font-size:16px;font-weight:600;color:#f1f5f9">忘記密碼</div>
+      <div style="font-size:12px;color:#94a3b8;margin-top:4px">輸入你的 Email，系統將寄送臨時密碼</div>
+    </div>
+    <div class="f"><label>收件 Email</label><div class="iw"><i class="ti ti-mail ic"></i><input id="fe" type="email" placeholder="your@email.com"></div></div>
+    <button class="btn bp" id="fpbtn" onclick="forgotPw()"><i class="ti ti-send" style="font-size:14px;vertical-align:-1px;margin-right:6px"></i>寄送臨時密碼</button>
+    <div class="dv">或</div>
+    <button class="btn bg" onclick="go('li')">← 返回登入</button>
+  </div>
+
+  <!-- ===== 重設臨時密碼頁 ===== -->
+  <div id="rp_sec" class="sec">
+    <div class="warn"><i class="ti ti-alert-triangle"></i><div><b>安全提醒</b><br>你使用臨時密碼登入，請立即設定新密碼。</div></div>
+    <div class="f">
+      <label>新密碼</label>
+      <div class="iw"><i class="ti ti-lock ic"></i><input id="np" type="password" placeholder="設定新密碼" oninput="rs(this,'B')"><button class="eye" onclick="ep('np',this)"><i class="ti ti-eye"></i></button></div>
+      <div id="swB" class="sw"></div>
+    </div>
+    <div class="f">
+      <label>確認新密碼</label>
+      <div class="iw"><i class="ti ti-lock-check ic"></i><input id="np2" type="password" placeholder="再次輸入新密碼" oninput="mp('np','np2','mhB');chkR()"><button class="eye" onclick="ep('np2',this)"><i class="ti ti-eye"></i></button></div>
+      <div id="mhB" class="mh"></div>
+    </div>
+    <button class="btn bp" id="rb2" onclick="doReset()" disabled>確認更新密碼</button>
+  </div>
+
+  <!-- ===== 雙因子驗證頁 ===== -->
+  <div id="tf" class="sec">
+    <div style="text-align:center;margin-bottom:1.5rem">
+      <div style="width:48px;height:48px;background:rgba(59,130,246,.15);border-radius:14px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:.75rem"><i class="ti ti-shield-check" style="font-size:24px;color:#60a5fa"></i></div>
+      <div style="font-size:16px;font-weight:600;color:#f1f5f9">雙因子驗證</div>
+      <div style="font-size:12px;color:#94a3b8;margin-top:4px" id="tfHint">驗證碼已寄出</div>
+    </div>
+    <div class="f"><label>6 位數驗證碼</label><div class="iw"><i class="ti ti-key ic"></i><input id="tfc" type="text" inputmode="numeric" maxlength="6" placeholder="000000" style="letter-spacing:6px;font-size:18px"></div></div>
+    <button class="btn bp" onclick="verify2FA()">驗證並登入</button>
+    <button class="fpl" type="button" id="tfResend" onclick="resend2FA()">重新寄送驗證碼</button>
+    <div class="dv">或</div>
+    <button class="btn bg" onclick="cancel2FA()">← 返回登入</button>
+  </div>
+
+  <!-- ===== 人臉辨識相機頁 ===== -->
+  <div id="fc" class="sec">
+    <div class="fbox"><video id="fv" autoplay muted playsinline></video></div>
+    <div id="fmsg"></div>
+    <button class="btn bg" onclick="faceStop()">取消</button>
+  </div>
+</div>
+
+<script>
+
+// ╔════════════════════════════════════════════════════════════
+// ║ 1. 初始化與全域狀態（EmailJS 設定、記憶體資料庫）
+// ╚════════════════════════════════════════════════════════════
+emailjs.init({publicKey:'G1iBcJUanJcj7psLS'});
+const SVC='service_22sqf1n',TPL='template_oy8xzck';
+const MY_PUB='7iTsiVO_ykFdehkdr',MY_SVC='service_r85q62a',MY_TPL='template_yfjsq3m';
+const db={}, $=id=>document.getElementById(id), val=id=>$(id).value.trim();
+const score={A:0,B:0}; let curUser=null;
+
+// ╔════════════════════════════════════════════════════════════
+// ║ 2. 密碼檢測規則與常用密碼字典資料
+// ╚════════════════════════════════════════════════════════════
+const COM=['123456','12345678','123456789','12345','111111','000000','654321','1q2w3e4r','qwerty','qwerty123','1qaz2wsx','password','password1','password123','letmein','welcome','admin','admin123','root','test','guest','changeme','iloveyou','monkey','dragon','sunshine','princess','football','baseball','shadow','superman','login','master','hello','abc123','P@ssw0rd','passw0rd','Admin123','Password1!']; // 最常見的密碼
+const SEQ=/(012|123|234|345|456|567|678|789|890|abc|bcd|cde|def|efg|fgh|ghi|hij|ijk|jkl|klm|lmn|mno|nop|opq|pqr|qrs|rst|stu|tuv|uvw|vwx|wxy|xyz|qwe|wer|ert|rty|tyu|yui|uio|iop|asd|sdf|dfg|ghj|hjk|zxc|xcv|cvb|vbn|bnm)/i;
+const CK_LABELS=['長度 ≥ 8','長度 ≥ 12','小寫字母','大寫字母','數字','特殊符號','無重複字元','無連續字串','非常見密碼'];
+const TIPS=['密碼至少需要 8 個字元','建議延長至 12 個字元以上','加入小寫字母（a-z）','加入大寫字母（A-Z）','加入數字（0-9）','加入特殊符號（!@#$%...）','避免連續重複相同字元','避免鍵盤連續字串（如 qwerty）','此為常見密碼，請更換'];
+
+// ╔════════════════════════════════════════════════════════════
+// ║ 3. 共用介面工具（切換頁籤、Toast、顯示密碼、密碼相符提示）
+// ╚════════════════════════════════════════════════════════════
+// 比對兩次密碼是否一致，顯示相符／不相符提示
+function mp(a,b,m){const p1=$(a).value,p2=$(b).value,el=$(m);if(!p2){el.style.display='none';return;}el.style.display='block';const ok=p1===p2;el.textContent=ok?'✓ 密碼相符':'✗ 密碼不相符';el.className=ok?'mh ok':'mh no';}
+// 切換密碼欄位顯示／隱藏
+function ep(id,b){const e=$(id),s=e.type==='password';e.type=s?'text':'password';b.querySelector('i').className=s?'ti ti-eye-off':'ti ti-eye';}
+// 切換頁籤並隱藏 Toast
+function go(t){document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('on',i===({li:0,rg:1}[t]??-1)));document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));$(t).classList.add('on');$('tk').style.display='none';}
+// 顯示 Toast 通知（ok／err／info），成功訊息 5 秒後自動消失
+function toast(m,t){const e=$('tk');e.textContent=m;e.className=t;e.style.display='block';if(t==='ok')setTimeout(()=>e.style.display='none',5000);}
+
+// ╔════════════════════════════════════════════════════════════
+// ║ 4. 密碼強度檢測（評分、即時強度面板）
+// ╚════════════════════════════════════════════════════════════
+// 動態產生密碼強度面板 DOM（首次呼叫時初始化，避免 HTML 重複）
+function initSW(id){
+  const el=$(id); if(el.dataset.init)return;
+  el.innerHTML=`<div class="sr"><span class="slb" id="sl${id}">請輸入密碼</span><span class="snum" id="sn${id}">0/100 分</span></div><div class="pt"><div class="pf" id="pf${id}"></div></div><div class="cks" id="cks${id}"></div><div class="sgw" id="sg${id}"><div class="st">改善建議</div><div id="sl2${id}"></div></div>`;
+  $('cks'+id).innerHTML=CK_LABELS.map((l,i)=>`<span class="ck" id="ck${id}${i}"><i class="ti ti-circle"></i>${l}</span>`).join('');
+  el.dataset.init=1;
+}
+// 計算密碼強度分數（0–100）與 9 項條件布林陣列
+function calc(v){
+  const r=[v.length>=8,v.length>=12,/[a-z]/.test(v),/[A-Z]/.test(v),/\d/.test(v),/[^A-Za-z0-9]/.test(v),!/(.).*\1{2,}/.test(v),!SEQ.test(v),!COM.includes(v.toLowerCase())];
+  let s=r.reduce((a,ok,i)=>a+([15,15,10,10,10,15,5,5,5][i]*(ok?1:0)),0);
+  if(v.length>=16)s+=10; if(new Set(v).size/v.length>0.7)s+=5;
+  return{s:Math.min(100,s),r};
+}
+// 密碼輸入時即時更新強度面板（k='A' 建立帳號 / 'B' 重設密碼）
+function rs(inp,k){
+  const v=inp.value,sw=$('sw'+k);
+  if(!v){sw.style.display='none';score[k]=0;chk();chkR();return;}
+  initSW('sw'+k); sw.style.display='block';
+  const{s,r}=calc(v); score[k]=s;
+  const lv=s<40?'l1':s<70?'l2':'l3';
+  $('slsw'+k).textContent={l1:'弱 ⚠',l2:'中 ◑',l3:'強 ✓'}[lv];
+  $('slsw'+k).className='slb '+lv;
+  $('snsw'+k).textContent=s+'/100 分';
+  const pf=$('pfsw'+k); pf.style.width=s+'%'; pf.className='pf '+lv;
+  r.forEach((ok,i)=>{const e=$('cksw'+k+i);e.className='ck '+(ok?'ok':'bad');e.querySelector('i').className=ok?'ti ti-check':'ti ti-x';});
+  const sg=[];
+  if(!r[0])sg.push(TIPS[0]);else if(!r[1])sg.push(TIPS[1]);
+  [2,3,4,5,6,7,8].forEach(i=>{if(!r[i])sg.push(TIPS[i]);});
+  $('sgsw'+k).style.display=sg.length?'block':'none';
+  $('sl2sw'+k).innerHTML=sg.map(t=>`<div class="si"><i class="ti ti-bulb"></i>${t}</div>`).join('');
+  chk();chkR();
+}
+
+// ╔════════════════════════════════════════════════════════════
+// ║ 5. 密碼登入（成功後進入雙因子驗證）
+// ╚════════════════════════════════════════════════════════════
+// 驗證帳號密碼；若為臨時密碼則強制跳轉重設頁，否則進入雙因子驗證
+function login(){
+  const u=val('lu'),p=$('lp').value;
+  if(!u||!p)return toast('請填寫帳號與密碼','err');
+  const key=db[u]?u:Object.keys(db).find(k=>db[k].e===u);
+  if(!key||db[key].p!==p)return toast('帳號或密碼錯誤','err');
+  if(db[key].tmp){
+    curUser=key;$('np').value='';$('np2').value='';
+    $('swB').style.display='none';$('mhB').style.display='none';
+    score.B=0;$('rb2').disabled=true;
+    toast('⚠ 請立即設定新密碼','info');go('rp_sec');
+  }else start2FA(key);
+}
+
+// ╔════════════════════════════════════════════════════════════
+// ║ 6. 建立帳號
+// ╚════════════════════════════════════════════════════════════
+// 確認所有欄位填寫且密碼強度 ≥ 40 分，才啟用「建立帳號」按鈕
+function chk(){const p1=$('rp').value,p2=$('rp2').value;$('rb').disabled=!(val('ru')&&val('re')&&p1&&p2&&p1===p2&&score.A>=40);}
+// 驗證表單並將帳號存入 db（含已綁定的人臉特徵），成功後自動跳回登入頁
+function reg(){
+  const u=val('ru'),e=val('re'),p=$('rp').value;
+  if(!e.includes('@'))return toast('請輸入有效 Email','err');
+  if(db[u])return toast('此帳號已存在','err');
+  if(score.A<40)return toast('密碼強度不足','err');
+  db[u]={e,p,tmp:false,face:regFace};regFace=null;
+  $('fbtn').innerHTML='<i class="ti ti-face-id"></i> 綁定人臉（選填）';
+  toast('帳號建立成功！','ok');
+  setTimeout(()=>{['ru','re','rp','rp2'].forEach(id=>$(id).value='');$('swA').style.display='none';$('mhA').style.display='none';score.A=0;go('li');$('lu').value=u;},1200);
+}
+
+// ╔════════════════════════════════════════════════════════════
+// ║ 7. 一鍵產生強密碼
+// ╚════════════════════════════════════════════════════════════
+// 安全隨機整數 0 ~ max-1（密碼學安全，無取模偏差）
+function rnd(max){
+  const limit=Math.floor(0x100000000/max)*max,b=new Uint32Array(1);
+  do{crypto.getRandomValues(b);}while(b[0]>=limit);
+  return b[0]%max;
+}
+const SETS=['ABCDEFGHJKLMNPQRSTUVWXYZ','abcdefghijkmnpqrstuvwxyz','23456789','!@#$%^&*()-_=+[]{}?'];
+// 產生指定長度的隨機密碼（排除易混淆字元，每類至少一個，並洗牌）
+function make(len){
+  const all=SETS.join(''),out=SETS.map(s=>s[rnd(s.length)]);
+  while(out.length<len)out.push(all[rnd(all.length)]);
+  for(let i=out.length-1;i>0;i--){const j=rnd(i+1);[out[i],out[j]]=[out[j],out[i]];}
+  return out.join('');
+}
+// 「生成密碼」按鈕：產生 16 碼強密碼填入兩個欄位，並更新強度面板、相符提示、按鈕狀態
+function fillGen(pid,cid,s){
+  let p,n=0;
+  do{p=make(16);}while(!calc(p).r.every(Boolean)&&++n<500); // 9 項檢查全過才採用
+  const a=$(pid),b=$(cid);
+  a.type=b.type='text';a.value=b.value=p;
+  rs(a,s);mp(pid,cid,'mh'+s);chk();
+  if(navigator.clipboard)navigator.clipboard.writeText(p).catch(()=>{});
+}
+
+// ╔════════════════════════════════════════════════════════════
+// ║ 8. 忘記密碼與重設密碼（EmailJS 寄送臨時密碼）
+// ╚════════════════════════════════════════════════════════════
+// 產生臨時密碼並透過 EmailJS 寄送，登入後強制重設
+async function forgotPw(){
+  const email=val('fe');
+  if(!email.includes('@'))return toast('請輸入有效的 Email','err');
+  const btn=$('fpbtn');
+  btn.disabled=true;btn.innerHTML='<i class="ti ti-loader-2" style="font-size:14px;vertical-align:-1px;margin-right:6px"></i>寄送中…';
+  toast('正在寄送臨時密碼…','info');
+  const tmp=make(12);
+  const found=Object.keys(db).find(u=>db[u].e===email);
+  if(found){db[found].p=tmp;db[found].tmp=true;}else{db['__'+email]={e:email,p:tmp,tmp:true};}
+  try{
+    await emailjs.send(SVC,TPL,{to_email:email,user:email,temp_pass:tmp});
+    toast('✓ 臨時密碼已寄至 '+email,'ok');
+    setTimeout(()=>{$('fe').value='';go('li');},3000);
+  }catch(e){toast('❌ 寄送失敗：'+(e.text||e.message||JSON.stringify(e)),'err');}
+  finally{btn.disabled=false;btn.innerHTML='<i class="ti ti-send" style="font-size:14px;vertical-align:-1px;margin-right:6px"></i>寄送臨時密碼';}
+}
+// 確認新密碼填寫完整且強度 ≥ 40 分，才啟用「確認更新」按鈕
+function chkR(){const p1=$('np').value,p2=$('np2').value;$('rb2').disabled=!(p1&&p2&&p1===p2&&score.B>=40);}
+// 將新密碼寫入 db，清除臨時標記，返回登入頁
+function doReset(){
+  if(!curUser)return toast('請重新登入','err');
+  db[curUser].p=$('np').value;db[curUser].tmp=false;
+  toast('✓ 密碼已更新！請重新登入','ok');curUser=null;
+  setTimeout(()=>{$('np').value='';$('np2').value='';$('lp').value='';go('li');},1500);
+}
+
+// ╔════════════════════════════════════════════════════════════
+// ║ 9. 雙因子驗證（Email 驗證碼）
+// ╚════════════════════════════════════════════════════════════
+/* ===== 雙因子驗證（Email 驗證碼） ===== */
+let tf=null; // {key, code, exp, tries}
+
+// 產生 6 位數安全隨機驗證碼
+function rnd6(){return String(100000+rnd(900000));}
+// 隱藏部分 Email，例如 a***@gmail.com
+function maskEmail(e){return e.replace(/^(.).*(@.*)$/,'$1***$2');}
+
+// 產生驗證碼並寄出（用自己的 EmailJS 帳號與範本）
+async function send2FACode(){
+  tf.code=rnd6(); tf.exp=Date.now()+5*60*1000; tf.tries=0;
+  await emailjs.send(MY_SVC,MY_TPL,{to_email:db[tf.key].e,user:tf.key,code:tf.code},{publicKey:MY_PUB});
+}
+// 密碼正確後呼叫：寄驗證碼並切到驗證頁
+async function start2FA(key){
+  tf={key};
+  toast('正在寄送驗證碼…','info');
+  try{
+    await send2FACode();
+    $('tfc').value='';
+    $('tfHint').textContent='驗證碼已寄至 '+maskEmail(db[key].e)+'（5 分鐘內有效）';
+    go('tf');
+    toast('✓ 驗證碼已寄出','ok');
+  }catch(e){tf=null;toast('❌ 寄送失敗：'+(e.text||e.message||JSON.stringify(e)),'err');}
+}
+// 檢查驗證碼：過期、錯誤次數、是否相符
+function verify2FA(){
+  if(!tf)return toast('請重新登入','err');
+  if(Date.now()>tf.exp)return toast('驗證碼已過期，請重新寄送','err');
+  if(++tf.tries>5){tf=null;go('li');return toast('錯誤次數過多，請重新登入','err');}
+  if(val('tfc')!==tf.code)return toast('驗證碼錯誤（還剩 '+(5-tf.tries)+' 次）','err');
+  const k=tf.key;tf=null;
+  $('lp').value='';
+  go('li');
+  toast('登入成功！歡迎 '+k+'（雙因子驗證通過）','ok');
+}
+// 重新寄送（30 秒內不能再按）
+async function resend2FA(){
+  if(!tf)return;
+  const b=$('tfResend');b.disabled=true;
+  try{await send2FACode();toast('✓ 已重新寄出驗證碼','ok');}
+  catch(e){toast('❌ 寄送失敗：'+(e.text||e.message||''),'err');}
+  setTimeout(()=>b.disabled=false,30000);
+}
+function cancel2FA(){tf=null;go('li');}
+
+// ╔════════════════════════════════════════════════════════════
+// ║ 10. 人臉辨識（face-api.js，只存 128 維特徵值，不存照片）
+// ╚════════════════════════════════════════════════════════════
+/* ===== 人臉辨識（face-api.js，只存 128 維特徵值，不存照片） ===== */
+let regFace=null,fMode=null,fStream=null;
+const FM='https://cdn.jsdelivr.net/gh/vladmandic/face-api@1.7.12/model/';
+const FACE_TH=0.6; // 比對門檻，越小越嚴格
+let fReady=null;
+const loadFace=()=>fReady||(fReady=Promise.all([
+  faceapi.nets.tinyFaceDetector.loadFromUri(FM),
+  faceapi.nets.faceLandmark68Net.loadFromUri(FM),
+  faceapi.nets.faceRecognitionNet.loadFromUri(FM)]));
+
+// 啟動相機並開始偵測（mode: 'reg' 綁定 / 'login' 登入）
+async function faceStart(mode){
+  fMode=mode;go('fc');$('fmsg').textContent='載入模型中（第一次約需數秒）…';
+  try{
+    if(!window.faceapi)throw new Error('face-api 函式庫未載入，請檢查網路連線');
+    await loadFace();
+    $('fmsg').textContent='啟動相機中…';
+    fStream=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:640},height:{ideal:480},facingMode:'user'}});
+    const v=$('fv');v.srcObject=fStream;
+    await new Promise(r=>{if(v.readyState>=2)r();else v.onloadeddata=r;});
+    await v.play();
+    $('fmsg').textContent='請正對鏡頭，保持不動…';
+    faceLoop();
+  }catch(e){fReady=null;faceStop();toast('❌ 無法啟動人臉辨識：'+(e.name||'')+' '+(e.message||e),'err');}
+}
+
+// 關閉相機並返回原頁
+function faceStop(){
+  fStream&&fStream.getTracks().forEach(t=>t.stop());fStream=null;
+  const back=fMode==='reg'?'rg':'li';fMode=null;go(back);
+}
+
+// 收集 6 張清晰畫面取平均特徵，再交給綁定或登入
+async function faceLoop(){
+  const opt=new faceapi.TinyFaceDetectorOptions({inputSize:320,scoreThreshold:.3});
+  const mode=fMode;
+  try{
+    await new Promise(r=>setTimeout(r,1000)); // 等鏡頭曝光穩定
+    const samples=[];
+    for(let n=0;n<100&&fStream;n++){
+      const r=await faceapi.detectSingleFace($('fv'),opt).withFaceLandmarks().withFaceDescriptor();
+      if(r&&r.detection.score>=0.7&&fStream){
+        samples.push(r.descriptor);
+        $('fmsg').textContent='擷取中…請保持不動（'+samples.length+'/6）';
+        if(samples.length>=6){
+          const d=Array.from(samples[0],(_,i)=>samples.reduce((s,v)=>s+v[i],0)/samples.length);
+          faceStop();
+          return mode==='reg'?faceBind(d):faceLogin(d);
+        }
+      }else if(fStream&&!samples.length)$('fmsg').textContent='尚未偵測到清楚的人臉，請正對鏡頭、增加正面光線（'+Math.round(n*0.2)+' 秒）';
+      await new Promise(r=>setTimeout(r,150));
+    }
+    if(fStream){faceStop();toast('偵測逾時，請在光線充足處再試一次','err');}
+  }catch(e){faceStop();toast('❌ 偵測發生錯誤：'+(e.message||e),'err');}
+}
+
+// 暫存人臉特徵，待「建立帳號」時一併存入
+function faceBind(d){
+  regFace=d;$('fbtn').innerHTML='<i class="ti ti-check"></i> 已綁定人臉';
+  toast('✓ 人臉已擷取，建立帳號後生效','ok');
+}
+
+// 與所有已綁定人臉的帳號比對
+function faceLogin(d){
+  let best=null,bd=9;
+  for(const [u,o] of Object.entries(db)){
+    if(!o.face)continue;
+    const dist=faceapi.euclideanDistance(d,o.face);
+    if(dist<bd){bd=dist;best=u;}
+  }
+  if(best===null)return toast('尚無已綁定人臉的帳號，請先建立帳號並綁定人臉（重新整理頁面會清空資料）','err');
+  if(bd<FACE_TH)toast('登入成功！歡迎 '+best+'（距離 '+bd.toFixed(2)+'）','ok');
+  else toast('人臉辨識失敗（距離 '+bd.toFixed(2)+'，需小於 '+FACE_TH+'），請再試一次或改用密碼登入','err');
+}
+</script>
+</body>
+</html>
